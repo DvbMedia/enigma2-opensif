@@ -17,6 +17,7 @@
 #define VFDICONDISPLAYONOFF   0xc0425a0a
 #define VFDDISPLAYCHARS       0xc0425a00
 #define VFDBRIGHTNESS         0xc0425a03
+#define VFDSETLED             0xc0425afe
 #define VFDDISPLAYWRITEONOFF  0xc0425a05 //light on off
 #define VFDSETTIME2           0xc0425afd
 
@@ -154,7 +155,7 @@ void evfd::vfd_set_brightness(unsigned char setting)
 	return;
 }
 
-void evfd::vfd_set_light(bool onoff)
+void evfd::vfd_set_led(bool onoff)
 {
 	struct vfd_ioctl_data data;
 	memset(&data, 0, sizeof(struct vfd_ioctl_data));
@@ -164,7 +165,7 @@ void evfd::vfd_set_light(bool onoff)
 		data.start = 0x00;
 	data.length = 0;
 	file_vfd = open (VFD_DEVICE, O_WRONLY);
-	ioctl(file_vfd, VFDDISPLAYWRITEONOFF, &data);
+	ioctl(file_vfd, VFDSETLED, &data);
 	close (file_vfd);
 	return;
 }
