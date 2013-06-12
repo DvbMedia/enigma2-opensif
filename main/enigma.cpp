@@ -28,9 +28,6 @@
 #include <lib/python/connections.h>
 #include <lib/python/python.h>
 
-#if defined(__sh__) // vfd class
-#include <lib/driver/vfd.h>
-#endif
 #include "bsod.h"
 #include "version_info.h"
 
@@ -223,12 +220,6 @@ int main(int argc, char **argv)
 	gRC::getInstance()->setSpinnerDC(my_dc);
 
 	eRCInput::getInstance()->keyEvent.connect(slot(keyEvent));
-
-#if defined(__sh__) // initialise the vfd class
-	evfd * vfd = new evfd;
-	vfd->init();
-	delete vfd;
-#endif
 	
 	printf("executing main\n");
 	
@@ -323,6 +314,11 @@ const char *getEnigmaVersionString()
 	std::string date = enigma2_date;
 	std::string branch = enigma2_branch;
 	return std::string(date + '-' + branch).c_str();
+}
+
+const char *getDistro()
+{
+        return DISTRO;
 }
 
 const char *getBoxType()

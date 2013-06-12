@@ -107,7 +107,6 @@ is usually caused by not marking PSignals as immutable.
 #include <lib/dvb_ci/dvbci_ui.h>
 #include <lib/python/python.h>
 #include <lib/gdi/picload.h>
-#include <lib/driver/vfd.h> 
 %}
 
 %feature("ref")   iObject "$this->AddRef(); /* eDebug(\"AddRef (%s:%d)!\", __FILE__, __LINE__); */ "
@@ -245,7 +244,6 @@ typedef long time_t;
 %include <lib/dvb/db.h>
 %include <lib/python/python.h>
 %include <lib/gdi/picload.h>
-%include <lib/driver/vfd.h>
 /**************  eptr  **************/
 
 /**************  signals  **************/
@@ -402,6 +400,7 @@ extern int getPrevAsciiCode();
 extern void addFont(const char *filename, const char *alias, int scale_factor, int is_replacement, int renderflags = 0);
 extern const char *getEnigmaVersionString();
 extern const char *getBoxType();
+extern const char *getDistro();
 extern void dump_malloc_stats(void);
 %}
 
@@ -412,4 +411,5 @@ extern void quitMainloop(int exit_code);
 extern eApplication *getApplication();
 extern const char *getEnigmaVersionString();
 extern const char *getBoxType();
+extern const char *getDistro();
 extern void dump_malloc_stats(void);

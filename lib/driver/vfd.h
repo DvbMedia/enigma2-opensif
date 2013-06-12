@@ -1,17 +1,13 @@
 #ifndef VFD_H_
 #define VFD_H_
 
-#define ICON_ON  1
-#define ICON_OFF 0
-
-typedef enum { USB = 0x10, HD, HDD, LOCK, BT, MP3, MUSIC, DD, MAIL, MUTE, PLAY, PAUSE, FF, FR, REC, CLOCK } tvfd_icon;
+typedef enum { VFD_USB = 0x10, VFD_STANDBY, VFD_SAT, VFD_REC, VFD_TIMESHIFT, VFD_TIMER, VFD_HD, VFD_LOCK, VFD_DD, VFD_MUTE, VFD_TUNER1, VFD_TUNER2, VFD_MP3, VFD_REPEAT, VFD_PLAY, VFD_PAUSE, VFD_TER, VFD_FILE, VFD_480i, VFD_480p, VFD_576i, VFD_576p, VFD_720p, VFD_1080i, VFD_1080p } tvfd_icon;
 
 class evfd
 {
 protected:
 	static evfd *instance;
 	int file_vfd;
-	int vfd_type;
 #ifdef SWIG
 	evfd();
 	~evfd();
@@ -24,25 +20,16 @@ public:
 	void init();
 	static evfd* getInstance();
 
-	int getVfdType() { return vfd_type; }
-	void vfd_set_SCROLL(int id);
-	void vfd_set_CENTER(bool id);
 	void vfd_set_icon(tvfd_icon id, bool onoff);
-	void vfd_set_icon(tvfd_icon id, bool onoff, bool force);
 	void vfd_clear_icons();
 
 	void vfd_write_string(char * string);
-	void vfd_write_string(char * str, bool force);
-	void vfd_write_string_scrollText(char* text);
 	void vfd_clear_string();
 	
 	void vfd_set_brightness(unsigned char setting);
 	void vfd_set_light(bool onoff);
-	void vfd_set_fan(bool onoff);
 
-	void vfd_led(char * led) {};
-	void vfd_symbol_network(int net) {};
-	void vfd_symbol_circle(int cir) {};
+	void vfd_set_clock(time_t t);
 
 };
 

@@ -71,11 +71,21 @@ class Harddisk:
 			self.dev_path = '/dev/' + self.device
 			self.disk_path = self.dev_path
 
-#+++>
 		elif self.type == DEVTYPE_DEVFS:
-			self.dev_path = '/dev/' + self.device
-			self.disk_path = self.dev_path
-#+++<
+			tmp = readFile(self.sysfsPath('dev')).split(':')
+			s_major = int(tmp[0])
+			s_minor = int(tmp[1])
+			for disc in os.listdir("/dev/discs"):
+				dev_path = os.path.realpath('/dev/discs/' + disc)
+				disk_path = dev_path + '/disc'
+				try:
+					rdev = os.stat(disk_path).st_rdev
+				except OSError:
+					continue
+				if s_major == os.major(rdev) and s_minor == os.minor(rdev):
+					self.dev_path = dev_path
+					self.disk_path = disk_path
+					break
 
 		print "new Harddisk", self.device, '->', self.dev_path, '->', self.disk_path
 		if not removable:
@@ -662,12 +672,6 @@ class HarddiskManager:
 		for item in getProcMounts():
 			if item[0] == dev:
 				return item[1]
-#+++>
-		#Check if has autofs mountpoint
-		mount = self.getAutofsMountpoint(device)
-		if mount:
-			return mount
-#+++<
 		return None
 
 	def addHotplugPartition(self, device, physdev = None):
@@ -683,10 +687,6 @@ class HarddiskManager:
 		error, blacklisted, removable, is_cdrom, partitions, medium_found = self.getBlockDevInfo(device)
 		if not blacklisted and medium_found:
 			description = self.getUserfriendlyDeviceName(device, physdev)
-#+++>
-			if description.startswith("External Storage"):
-				return False, False, False, False, [], False
-#+++<
 			p = Partition(mountpoint = self.getMountpoint(device), description = description, force_mounted = True, device = device)
 			self.partitions.append(p)
 			if p.mountpoint: # Plugins won't expect unmounted devices

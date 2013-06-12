@@ -7,30 +7,21 @@
 #include <sys/ioctl.h>
 #include <ctype.h>
 #include <sys/stat.h>
-#include  <pthread.h>
+#include <pthread.h>
 
 #include <lib/base/eerror.h>
 #include <lib/driver/vfd.h>
 
+#define VFDLENGTH 16
 #define VFD_DEVICE "/dev/vfd"
 #define VFDICONDISPLAYONOFF   0xc0425a0a
 #define VFDDISPLAYCHARS       0xc0425a00
 #define VFDBRIGHTNESS         0xc0425a03
-//light on off
-#define VFDDISPLAYWRITEONOFF  0xc0425a05
+#define VFDDISPLAYWRITEONOFF  0xc0425a05 //light on off
+#define VFDSETTIME2           0xc0425afd
 
-bool startloop_running = false;
-static bool icon_onoff[32];
 static pthread_t thread_start_loop = 0;
 void * start_loop (void *arg);
-bool blocked = false;
-bool requested = false;
-bool VFD_CENTER = false;
-bool scoll_loop = false;
-int VFD_SCROLL = 1;
-
-char chars[64];
-char g_str[64];
 
 struct vfd_ioctl_data
 {
@@ -38,8 +29,6 @@ struct vfd_ioctl_data
 	unsigned char data[64];
 	unsigned char length;
 };
-
-#define VFDLENGTH 16
 
 evfd* evfd::instance = NULL;
 
@@ -53,7 +42,6 @@ evfd* evfd::getInstance()
 evfd::evfd()
 {
 	file_vfd = 0;
-	memset ( chars, ' ', 63 );
 }
 
 void evfd::init()
@@ -70,9 +58,8 @@ evfd::~evfd()
 void * start_loop (void *arg)
 {
 	evfd vfd;
-	blocked = true;
 	//vfd.vfd_clear_icons();
-	vfd.vfd_write_string("SH4 Git ENIGMA2", true);
+	vfd.vfd_write_string("Opensif Spark");
 	//run 2 times through all icons 
 	for (int vloop = 0; vloop < 128; vloop++)
 	{
@@ -107,62 +94,22 @@ void * start_loop (void *arg)
 		usleep(75000);
 	}
 	vfd.vfd_set_brightness(7);
-	blocked = false;
 	return NULL;
 }
 
 void evfd::vfd_write_string(char * str)
 {
-	vfd_write_string(str, false);
-}
-
-void evfd::vfd_write_string(char * str, bool force)
-{
 	int i;
 	i = strlen ( str );
 	if ( i > 63 ) i = 63;
-	memset ( chars, ' ', 63 );
-	memcpy ( chars, str, i);
-	if (!blocked || force)
-	{
-		struct vfd_ioctl_data data;
-		memset ( data.data, ' ', 63 );
-		memcpy ( data.data, str, i );
-
-		data.start = 0;
-		data.length = i;
-
-		file_vfd = open (VFD_DEVICE, O_WRONLY);
-		ioctl ( file_vfd, VFDDISPLAYCHARS, &data );
-		close (file_vfd);
-	}
-	return;
-}
-
-void evfd::vfd_write_string_scrollText(char* text)
-{
-	if (!blocked)
-	{
-		int i, len = strlen(text);
-		char* out = (char *) malloc(16);
-		for (i=0; i<=(len-16); i++)
-		{ // scroll text till end
-			memset(out, ' ', 16);
-			memcpy(out, text+i, 16);
-			vfd_write_string(out);
-			usleep(200000);
-		}
-		for (i=1; i<16; i++)
-		{ // scroll text with whitespaces from right
-			memset(out, ' ', 16);
-			memcpy(out, text+len+i-16, 16-i);
-			vfd_write_string(out);
-			usleep(200000);
-		}
-		memcpy(out, text, 16); // display first 16 chars after scrolling
-		vfd_write_string(out);
-		free (out);
-	}
+	struct vfd_ioctl_data data;
+	memset ( data.data, ' ', 63 );
+	memcpy ( data.data, str, i );
+	data.start = 0;
+	data.length = i;
+	file_vfd = open (VFD_DEVICE, O_WRONLY);
+	ioctl ( file_vfd, VFDDISPLAYCHARS, &data );
+	close (file_vfd);
 	return;
 }
 
@@ -174,30 +121,15 @@ void evfd::vfd_clear_string()
 
 void evfd::vfd_set_icon(tvfd_icon id, bool onoff)
 {
-	vfd_set_icon(id, onoff, false);
-	return;
-}
-
-void evfd::vfd_set_icon(tvfd_icon id, bool onoff, bool force)
-{
-	icon_onoff[id] = onoff;
-	if (!blocked || force)
-	{
-		struct vfd_ioctl_data data;
-		if (!startloop_running)
-		{
-			memset(&data, 0, sizeof(struct vfd_ioctl_data));
-
-			data.start = 0x00;
-			data.data[0] = id;
-			data.data[4] = onoff;
-			data.length = 5;
-
-			file_vfd = open (VFD_DEVICE, O_WRONLY);
-			ioctl(file_vfd, VFDICONDISPLAYONOFF, &data);
-			close (file_vfd);
-		}
-	}
+	struct vfd_ioctl_data data;
+	memset(&data, 0, sizeof(struct vfd_ioctl_data));
+	data.start = 0x00;
+	data.data[0] = id;
+	data.data[4] = onoff;
+	data.length = 5;
+	file_vfd = open (VFD_DEVICE, O_WRONLY);
+	ioctl(file_vfd, VFDICONDISPLAYONOFF, &data);
+	close (file_vfd);
 	return;
 }
 
@@ -213,49 +145,38 @@ void evfd::vfd_clear_icons()
 void evfd::vfd_set_brightness(unsigned char setting)
 {
 	struct vfd_ioctl_data data;
-
 	memset(&data, 0, sizeof(struct vfd_ioctl_data));
-
 	data.start = setting & 0x07;
 	data.length = 0;
-
 	file_vfd = open (VFD_DEVICE, O_WRONLY);
 	ioctl ( file_vfd, VFDBRIGHTNESS, &data );
 	close (file_vfd);
-
 	return;
 }
 
 void evfd::vfd_set_light(bool onoff)
 {
 	struct vfd_ioctl_data data;
-
 	memset(&data, 0, sizeof(struct vfd_ioctl_data));
-
 	if (onoff)
 		data.start = 0x01;
 	else
 		data.start = 0x00;
-		data.length = 0;
-
+	data.length = 0;
 	file_vfd = open (VFD_DEVICE, O_WRONLY);
 	ioctl(file_vfd, VFDDISPLAYWRITEONOFF, &data);
-
 	close (file_vfd);
 	return;
 }
 
-void evfd::vfd_set_fan(bool onoff)
+void evfd::vfd_set_clock(time_t t)
 {
+	struct tm *tmp;
+	tmp = localtime(&t);
+	t += tmp->tm_gmtoff;
+	file_vfd = open (VFD_DEVICE, O_WRONLY);
+	ioctl(file_vfd, VFDSETTIME2, &t);
+	close (file_vfd);
 	return;
 }
 
-void evfd::vfd_set_SCROLL(int id)
-{
-	VFD_SCROLL=id;
-}
-
-void evfd::vfd_set_CENTER(bool id)
-{
-	VFD_CENTER=id;
-}

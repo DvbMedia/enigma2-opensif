@@ -8,9 +8,6 @@ from Screens.MessageBox import MessageBox
 
 profile("LOAD:enigma")
 import enigma
-#+++>
-from enigma import iServiceInformation, iPlayableService
-#+++<
 
 profile("LOAD:InfoBarGenerics")
 from Screens.InfoBarGenerics import InfoBarShowHide, InfoBarSIFTeam, \
@@ -21,7 +18,7 @@ from Screens.InfoBarGenerics import InfoBarShowHide, InfoBarSIFTeam, \
 	InfoBarServiceNotifications, InfoBarPVRState, InfoBarCueSheetSupport, InfoBarSimpleEventView, \
 	InfoBarSummarySupport, InfoBarMoviePlayerSummarySupport, InfoBarTimeshiftState, InfoBarTeletextPlugin, InfoBarExtensions, \
 	InfoBarSubtitleSupport, InfoBarPiP, InfoBarPlugins, InfoBarServiceErrorPopupSupport, InfoBarJobman, \
-	InfoBarAspectSelection, InfoBarSleepTimer, setResumePoint, delResumePoint
+	setResumePoint, delResumePoint
 
 profile("LOAD:InitBar_Components")
 from Components.ActionMap import HelpableActionMap
@@ -38,7 +35,7 @@ class InfoBar(InfoBarBase, InfoBarShowHide, InfoBarSIFTeam,
 	InfoBarSubserviceSelection, InfoBarTimeshift, InfoBarSeek,
 	InfoBarSummarySupport, InfoBarTimeshiftState, InfoBarTeletextPlugin, InfoBarExtensions,
 	InfoBarPiP, InfoBarPlugins, InfoBarSubtitleSupport, InfoBarServiceErrorPopupSupport, InfoBarJobman,
-	InfoBarAspectSelection, InfoBarSleepTimer, Screen):
+	Screen):
 	
 	ALLOW_SUSPEND = True
 	instance = None
@@ -51,11 +48,6 @@ class InfoBar(InfoBarBase, InfoBarShowHide, InfoBarSIFTeam,
 				"toogleTvRadio": (self.toogleTvRadio, _("toggels betwenn tv and radio...")),
 				"showRadio": (self.showRadio, _("Show the radio player...")),
 				"showTv": (self.showTv, _("Show the tv player...")),
-				"toogleTvRadio": (self.toogleTvRadio, _("toggels betwenn tv and radio...")),
-				"volumeUp": (self._volUp, _("...")),
-				"volumeDown": (self._volDown, _("...")),
-				"resolution": (self.resolution, _("...")),
-				"aspect": (self.aspect, _("...")),
 			}, prio=2)
 		
 		self.allowPiP = True
@@ -67,7 +59,7 @@ class InfoBar(InfoBarBase, InfoBarShowHide, InfoBarSIFTeam,
 				InfoBarAdditionalInfo, InfoBarNotifications, InfoBarDish, InfoBarSubserviceSelection, \
 				InfoBarTimeshift, InfoBarSeek, InfoBarSummarySupport, InfoBarTimeshiftState, \
 				InfoBarTeletextPlugin, InfoBarExtensions, InfoBarPiP, InfoBarSubtitleSupport, InfoBarJobman, \
-				InfoBarAspectSelection, InfoBarSleepTimer, InfoBarPlugins, InfoBarServiceErrorPopupSupport:
+				InfoBarPlugins, InfoBarServiceErrorPopupSupport:
 			x.__init__(self)
 
 		self.helpList.append((self["actions"], "InfobarActions", [("showMovies", _("Watch recordings..."))]))
@@ -81,88 +73,6 @@ class InfoBar(InfoBarBase, InfoBarShowHide, InfoBarSIFTeam,
 		self.current_begin_time=0
 		assert InfoBar.instance is None, "class InfoBar is a singleton class and just one instance of this class is allowed!"
 		InfoBar.instance = self
-
-	def aspect(self):
-		selection = 0
-		tlist = []
-		try:
-			policy = open("/proc/stb/video/policy_choices").read()[:-1]
-		except IOError:
-			print "couldn't read available policymodes."
-			policy_available = [ ]
-			return
-		policy_available = policy.split(' ')
-		for x in policy_available:
-			tlist.append((x[0].upper() + x[1:], _(x)))
-
-		mode = open("/proc/stb/video/policy").read()[:-1]
-		for x in range(len(tlist)):
-			if tlist[x][1] == mode:
-				selection = x
-
-		keys = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9" ]
-		from Screens.ChoiceBox import ChoiceBox
-		self.session.openWithCallback(self.aspectSelect, ChoiceBox, title=_("Please select an aspect ratio..."), list = tlist, selection = selection, keys = keys)
-
-	def aspectSelect(self, aspect):
-		if not aspect is None:
-			if isinstance(aspect[1], str):
-				open("/proc/stb/video/policy", "w").write(aspect[1])
-		return
-
-	def resolution(self):
-		xresString = open("/proc/stb/vmpeg/0/xres", "r").read()
-		yresString = open("/proc/stb/vmpeg/0/yres", "r").read()
-		fpsString = open("/proc/stb/vmpeg/0/framerate", "r").read()
-		xres = int(xresString, 16)
-		yres = int(yresString, 16)
-		fps = int(fpsString, 16)
-		fpsFloat = float(fps)
-		fpsFloat = fpsFloat/1000
-
-		selection = 0
-		tlist = []
-		tlist.append(("Video: " + str(xres) + "x" + str(yres) + "@" + str(fpsFloat) + "hz", ""))
-		tlist.append(("--", ""))
-		tlist.append(("576i", "576i50"))
-		tlist.append(("576p", "576p50"))
-		tlist.append(("720p@50hz", "720p50"))
-		tlist.append(("720p@60hz", "720p60"))
-		tlist.append(("1080i@50hz", "1080i50"))
-		tlist.append(("1080i@60hz", "1080i60"))
-		tlist.append(("1080p@23.976hz", "1080p23"))
-		tlist.append(("1080p@24hz", "1080p24"))
-		tlist.append(("1080p@25hz", "1080p25"))
-		tlist.append(("1080p@30hz", "1080p30"))
-		tlist.append(("1080p@50hz", "1080p50"))
-		tlist.append(("1080p@59hz", "1080p59"))
-		tlist.append(("1080p@60hz", "1080p60"))
-		keys = ["green", "", "yellow", "blue", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" ]
-
-		mode = open("/proc/stb/video/videomode").read()[:-1]
-		for x in range(len(tlist)):
-			if tlist[x][1] == mode:
-				selection = x
-		from Screens.ChoiceBox import ChoiceBox
-		self.session.openWithCallback(self.ResolutionSelect, ChoiceBox, title=_("Please select a resolution..."), list = tlist, selection = selection, keys = keys)
-
-	def ResolutionSelect(self, Resolution):
-		if not Resolution is None:
-			if isinstance(Resolution[1], str):
-				open("/proc/stb/video/videomode", "w").write(Resolution[1])
-				from enigma import gMainDC
-				gMainDC.getInstance().setResolution(-1, -1)
-		return
-
-	def _volUp(self):
-		print "_volUp"
-		from Components.VolumeControl import VolumeControl
-		VolumeControl.instance.volUp()
-
-	def _volDown(self):
-		print "_volDown"
-		from Components.VolumeControl import VolumeControl
-		VolumeControl.instance.volDown()
 
 	def __onClose(self):
 		InfoBar.instance = None
@@ -181,22 +91,6 @@ class InfoBar(InfoBarBase, InfoBarShowHide, InfoBarSIFTeam,
 	def __checkServiceStarted(self):
 		self.__serviceStarted(True)
 		self.onExecBegin.remove(self.__checkServiceStarted)
-
-	def toogleTvRadio(self): 
-		service = self.session.nav.getCurrentService()
-		info = service.info()
-		AudioPID = info.getInfo(iServiceInformation.sAudioPID)
-		VideoPID = info.getInfo(iServiceInformation.sVideoPID)
-
-		print "sAudioPID", AudioPID
-		print "sVideoPID", VideoPID
-
-		if VideoPID == -1:
-			print "radio->tv"
-			self.showTv2()
-		else:
-			print "tv->radio"
-			self.showRadio2()
 
 	def serviceStarted(self):  #override from InfoBarShowHide
 		new = self.servicelist.newServicePlayed()
@@ -236,19 +130,6 @@ class InfoBar(InfoBarBase, InfoBarShowHide, InfoBarSIFTeam,
 		else: 
 			self.showRadio()		
 
-	def showTv2(self):
-		self.showTvChannelList(False)
-		self.openServiceList()
-
-	def showRadio2(self):
-		if config.usage.e1like_radio_mode.value:
-			self.showRadioChannelList(False)
-			self.openServiceList()
-		else:
-			self.rds_display.hide() # in InfoBarRdsDecoder
-			from Screens.ChannelSelection import ChannelSelectionRadio
-			self.session.openWithCallback(self.ChannelSelectionRadioClosed, ChannelSelectionRadio, self)
-
 	def ChannelSelectionRadioClosed(self, *arg):
 		self.rds_display.show()  # in InfoBarRdsDecoder
 
@@ -270,7 +151,6 @@ class MoviePlayer(InfoBarBase, InfoBarShowHide, \
 		InfoBarSeek, InfoBarShowMovies, InfoBarAudioSelection, HelpableScreen, InfoBarNotifications,
 		InfoBarServiceNotifications, InfoBarPVRState, InfoBarCueSheetSupport, InfoBarSimpleEventView,
 		InfoBarMoviePlayerSummarySupport, InfoBarSubtitleSupport, Screen, InfoBarTeletextPlugin,
-		InfoBarAspectSelection, InfoBarSubserviceSelection,
 		InfoBarServiceErrorPopupSupport, InfoBarExtensions, InfoBarPlugins, InfoBarPiP):
 
 	ENABLE_RESUME_SUPPORT = True
@@ -281,8 +161,6 @@ class MoviePlayer(InfoBarBase, InfoBarShowHide, \
 	def __init__(self, session, service, slist = None, lastservice = None):
 		Screen.__init__(self, session)
 		
-		InfoBarAspectSelection.__init__(self)
-
 		self["actions"] = HelpableActionMap(self, "MoviePlayerActions",
 			{
 				"leavePlayer": (self.leavePlayer, _("leave movie player...")),
@@ -393,22 +271,12 @@ class MoviePlayer(InfoBarBase, InfoBarShowHide, \
 					return
 
 		if answer in ("quit", "quitanddeleteconfirmed"):
-#+++>
-                        # make sure that playback is unpaused otherwise the
-                        # player driver might stop working
-                        self.setSeekState(self.SEEK_STATE_PLAY)
-#+++<
 			self.close()
 		elif answer == "movielist":
 			ref = self.session.nav.getCurrentlyPlayingServiceReference()
 			self.returning = True
 			self.session.openWithCallback(self.movieSelected, Screens.MovieSelection.MovieSelection, ref)
 			self.session.nav.stopService()
-#+++>
-                        # make sure that playback is unpaused otherwise the
-                        # player driver might stop working
-                        self.setSeekState(self.SEEK_STATE_PLAY)
-#+++<
 		elif answer == "restart":
 			self.doSeek(0)
 			self.setSeekState(self.SEEK_STATE_PLAY)
@@ -553,7 +421,3 @@ class MoviePlayer(InfoBarBase, InfoBarShowHide, \
 
 	def ref2HumanName(self, ref):
 		return enigma.eServiceCenter.getInstance().info(ref).getName(ref)
-
-	def sleepTimer(self):
-		from Screens.SleepTimerEdit import SleepTimerEdit
-		self.session.open(SleepTimerEdit)
