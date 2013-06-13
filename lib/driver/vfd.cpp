@@ -24,6 +24,50 @@
 static pthread_t thread_start_loop = 0;
 void * start_loop (void *arg);
 
+struct set_mode_s {
+	int compat; /* 0 = compatibility mode to vfd driver; 1 = nuvoton mode */
+};
+
+struct set_brightness_s {
+	int level;
+};
+
+struct set_icon_s {
+	int icon_nr;
+	int on;
+};
+
+struct set_led_s {
+	int led_nr;
+	int on;
+};
+
+/* time must be given as follows:
+ * time[0] & time[1] = mjd ???
+ * time[2] = hour
+ * time[3] = min
+ * time[4] = sec
+ */
+struct set_standby_s {
+	char time[5];
+};
+
+struct set_time_s {
+	char time[5];
+};
+
+struct aotom_ioctl_data {
+	union
+	{
+		struct set_icon_s icon;
+		struct set_led_s led;
+		struct set_brightness_s brightness;
+		struct set_mode_s mode;
+		struct set_standby_s standby;
+		struct set_time_s time;
+	} u;
+};
+
 struct vfd_ioctl_data
 {
 	unsigned char start;
@@ -47,7 +91,7 @@ evfd::evfd()
 
 void evfd::init()
 {
-	pthread_create (&thread_start_loop, NULL, &start_loop, NULL);
+	//pthread_create (&thread_start_loop, NULL, &start_loop, NULL);
 	return;
 }
 
@@ -155,17 +199,14 @@ void evfd::vfd_set_brightness(unsigned char setting)
 	return;
 }
 
-void evfd::vfd_set_led(bool onoff)
+void evfd::vfd_set_led(int onoff)
 {
-	struct vfd_ioctl_data data;
-	memset(&data, 0, sizeof(struct vfd_ioctl_data));
-	if (onoff)
-		data.start = 0x01;
-	else
-		data.start = 0x00;
-	data.length = 0;
+	struct aotom_ioctl_data vData;
+	vData.u.led.led_nr = 0;
+	vData.u.led.on = onoff;
+	memset(&vData, 0, sizeof(struct aotom_ioctl_data vData));
 	file_vfd = open (VFD_DEVICE, O_WRONLY);
-	ioctl(file_vfd, VFDSETLED, &data);
+	ioctl(context->fd, VFDSETLED, &vData);
 	close (file_vfd);
 	return;
 }
