@@ -206,7 +206,7 @@ void evfd::vfd_set_led(int onoff)
 	vData.u.led.on = onoff;
 	memset(&vData, 0, sizeof(struct aotom_ioctl_data vData));
 	file_vfd = open (VFD_DEVICE, O_WRONLY);
-	ioctl(context->fd, VFDSETLED, &vData);
+	ioctl(file_vfd, VFDSETLED, &vData);
 	close (file_vfd);
 	return;
 }
