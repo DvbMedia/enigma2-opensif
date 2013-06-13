@@ -21,9 +21,6 @@
 #define VFDDISPLAYWRITEONOFF  0xc0425a05 //light on off
 #define VFDSETTIME2           0xc0425afd
 
-static pthread_t thread_start_loop = 0;
-void * start_loop (void *arg);
-
 struct set_mode_s {
 	int compat; /* 0 = compatibility mode to vfd driver; 1 = nuvoton mode */
 };
@@ -89,57 +86,13 @@ evfd::evfd()
 	file_vfd = 0;
 }
 
-void evfd::init()
-{
-	//pthread_create (&thread_start_loop, NULL, &start_loop, NULL);
-	return;
-}
-
 evfd::~evfd()
 {
 	//close (file_vfd);
 }
 
-void * start_loop (void *arg)
+void evfd::init()
 {
-	evfd vfd;
-	//vfd.vfd_clear_icons();
-	vfd.vfd_write_string("Opensif Spark");
-	//run 2 times through all icons 
-	for (int vloop = 0; vloop < 128; vloop++)
-	{
-		if (vloop%14 == 0 )
-			vfd.vfd_set_brightness(1);
-		else if (vloop%14 == 1 )
-			vfd.vfd_set_brightness(2);
-		else if (vloop%14 == 2 )
-			vfd.vfd_set_brightness(3);
-		else if (vloop%14 == 3 )
-			vfd.vfd_set_brightness(4);
-		else if (vloop%14 == 4 )
-			vfd.vfd_set_brightness(5);
-		else if (vloop%14 == 5 )
-			vfd.vfd_set_brightness(6);
-		else if (vloop%14 == 6 )
-			vfd.vfd_set_brightness(7);
-		else if (vloop%14 == 7 )
-			vfd.vfd_set_brightness(6);
-		else if (vloop%14 == 8 )
-			vfd.vfd_set_brightness(5);
-		else if (vloop%14 == 9 )
-			vfd.vfd_set_brightness(4);
-		else if (vloop%14 == 10 )
-			vfd.vfd_set_brightness(3);
-		else if (vloop%14 == 11 )
-			vfd.vfd_set_brightness(2);
-		else if (vloop%14 == 12 )
-			vfd.vfd_set_brightness(1);
-		else if (vloop%14 == 13 )
-			vfd.vfd_set_brightness(0);
-		usleep(75000);
-	}
-	vfd.vfd_set_brightness(7);
-	return NULL;
 }
 
 void evfd::vfd_write_string(char * str)
@@ -204,7 +157,7 @@ void evfd::vfd_set_led(int onoff)
 	struct aotom_ioctl_data vData;
 	vData.u.led.led_nr = 0;
 	vData.u.led.on = onoff;
-	memset(&vData, 0, sizeof(struct aotom_ioctl_data vData));
+	memset(&vData, 0, sizeof(struct aotom_ioctl_data));
 	file_vfd = open (VFD_DEVICE, O_WRONLY);
 	ioctl(file_vfd, VFDSETLED, &vData);
 	close (file_vfd);
