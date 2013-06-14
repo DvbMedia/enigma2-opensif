@@ -152,17 +152,16 @@ void evfd::vfd_set_brightness(unsigned char setting)
 	return;
 }
 
-void evfd::vfd_set_led(long onoff)
+void evfd::vfd_set_led(bool onoff)
 {
 	int status;
 	struct aotom_ioctl_data vData;
+	memset(&vData, 0, sizeof(struct aotom_ioctl_data));
 	vData.u.led.led_nr = 0;
 	if (onoff)
 		vData.u.led.on = 1;
 	else
 		vData.u.led.on = 0;
-
-	memset(&vData, 0, sizeof(struct aotom_ioctl_data));
 	
 	eDebug("[evfd] Set led: which = %d, onoff = %d",vData.u.led.led_nr,vData.u.led.on);
 
