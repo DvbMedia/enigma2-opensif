@@ -160,12 +160,12 @@ void evfd::vfd_set_led(int onoff)
 	vData.u.led.on = onoff;
 	memset(&vData, 0, sizeof(struct aotom_ioctl_data));
 	
-	printf("[evfd] Set led: which = %d, onoff = %d",vData.u.led.led_nr,vData.u.led.on);
+	eDebug("[evfd] Set led: which = %d, onoff = %d",vData.u.led.led_nr,vData.u.led.on);
 
  	file_vfd = open (VFD_DEVICE, O_WRONLY);
 	status=ioctl(file_vfd, VFDSETLED, &vData);
 	
-	printf("[evfd] Set led: status = %d",status);
+	eDebug("[evfd] Set led: status = %d",status);
 
 	close (file_vfd);
 	return;
