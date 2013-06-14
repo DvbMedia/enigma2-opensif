@@ -27,7 +27,7 @@ public:
 	void vfd_clear_string();
 	
 	void vfd_set_brightness(unsigned char setting);
-	void vfd_set_led(bool onoff);
+	void vfd_set_led(long onoff);
 
 	void vfd_set_clock(time_t t);
 

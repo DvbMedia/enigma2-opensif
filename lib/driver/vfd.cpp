@@ -152,7 +152,7 @@ void evfd::vfd_set_brightness(unsigned char setting)
 	return;
 }
 
-void evfd::vfd_set_led(bool onoff)
+void evfd::vfd_set_led(long onoff)
 {
 	int status;
 	struct aotom_ioctl_data vData;
