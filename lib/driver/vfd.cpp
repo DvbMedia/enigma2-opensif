@@ -162,14 +162,8 @@ void evfd::vfd_set_led(bool onoff)
 		vData.u.led.on = 1;
 	else
 		vData.u.led.on = 0;
-	
-	eDebug("[evfd] Set led: which = %d, onoff = %d",vData.u.led.led_nr,vData.u.led.on);
-
  	file_vfd = open (VFD_DEVICE, O_WRONLY);
 	status=ioctl(file_vfd, VFDSETLED, &vData);
-	
-	eDebug("[evfd] Set led: status = %d",status);
-
 	close (file_vfd);
 	return;
 }
