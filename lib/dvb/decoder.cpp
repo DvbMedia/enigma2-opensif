@@ -757,7 +757,7 @@ int eTSMPEGDecoder::setState()
 #if not defined(__sh__) // see comment below
 			m_video->setSlowMotion(s[1]);
 			m_video->setFastForward(s[2]);
-#endif 
+#endif
 			if (s[0])
 				m_video->unfreeze();
 			else
@@ -1083,7 +1083,7 @@ RESULT eTSMPEGDecoder::showSinglePic(const char *filename)
 #if not defined(__sh__)
 				if (ioctl(m_video_clip_fd, VIDEO_SET_STREAMTYPE, streamtype) < 0)
 					eDebug("VIDEO_SET_STREAMTYPE failed(%m)");
-#endif 
+#endif
 				if (ioctl(m_video_clip_fd, VIDEO_PLAY) < 0)
 					eDebug("VIDEO_PLAY failed (%m)");
 				if (ioctl(m_video_clip_fd, VIDEO_CONTINUE) < 0)
@@ -1102,7 +1102,7 @@ RESULT eTSMPEGDecoder::showSinglePic(const char *filename)
 				write(m_video_clip_fd, stuffing, 8192);
 #if not defined(__sh__)
 				m_showSinglePicTimer->start(150, true);
-#endif 
+#endif
 			}
 			close(f);
 		}
