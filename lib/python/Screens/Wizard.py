@@ -304,6 +304,9 @@ class Wizard(Screen):
 		pass
 
 	def exit(self):
+#+++>
+		evfd.getInstance().vfd_clear_string()
+#+++<
 		Wizard.instance = None
 		self.close()
 
