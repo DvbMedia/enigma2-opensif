@@ -98,16 +98,6 @@ AC_ARG_WITH(distro,
 AC_SUBST(DISTRO)
 AC_DEFINE_UNQUOTED(DISTRO,"$DISTRO",[distro name])
 
-AC_ARG_WITH(graphlcd,
-	AC_HELP_STRING([--with-graphlcd], [use GraphLCD color display, yes or no]),
-	[[withgraphlcd=$withval]],
-	[[withgraphlcd=no]]
-)
-if test x"$withgraphlcd" != xno ; then
-	AC_DEFINE(HAVE_GRAPHLCD, 1,[Define when using a GraphLCD color display device])
-fi
-AM_CONDITIONAL(HAVE_GRAPHLCD, test x"$withgraphlcd" != xno)
-
 AC_ARG_WITH(textlcd,
 	AC_HELP_STRING([--with-textlcd], [use ascii based lcd, yes or no]),
 	[[withtextlcd=$withval]],
@@ -137,6 +127,16 @@ if test x"$withgigabluelcd" != xno ; then
 	AC_DEFINE(HAVE_GIGABLUELCD, 1,[Define when using a 220x176 color display device])
 fi
 AM_CONDITIONAL(HAVE_GIGABLUELCD, test x"$withgigabluelcd" != xno)
+
+AC_ARG_WITH(graphlcd,
+	AC_HELP_STRING([--with-graphlcd], [use GraphLCD color display, yes or no]),
+	[[withgraphlcd=$withval]],
+	[[withgraphlcd=no]]
+)
+if test x"$withgraphlcd" != xno ; then
+	AC_DEFINE(HAVE_GRAPHLCD, 1,[Define when using a GraphLCD color display device])
+fi
+AM_CONDITIONAL(HAVE_GRAPHLCD, test x"$withgraphlcd" != xno)
 
 AC_ARG_WITH(oldpvr,
 	AC_HELP_STRING([--with-oldpvr], [use /dev/misc/pvr instead of /dev/dvb/adapterX/dvrX, yes or no]),
