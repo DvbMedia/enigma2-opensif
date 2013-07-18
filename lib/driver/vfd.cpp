@@ -93,7 +93,7 @@ evfd::~evfd()
 
 void evfd::init()
 {
-	vfd_write_string("SH4 OpenSif");
+	vfd_write_string("Starting opensif sh4");
 }
 
 void evfd::vfd_write_string(char * str)
