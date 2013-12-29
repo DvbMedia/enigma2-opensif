@@ -1,6 +1,7 @@
 #include <lib/base/cfile.h>
 #include <lib/base/ebase.h>
 #include <lib/base/eerror.h>
+#include <lib/base/wrappers.h>
 #include <lib/dvb/decoder.h>
 #include <lib/components/tuxtxtapp.h>
 #include <linux/dvb/audio.h>
@@ -39,7 +40,21 @@ int eDVBAudio::startPid(int pid, int type)
 	pes.pid      = pid;
 	pes.input    = DMX_IN_FRONTEND;
 	pes.output   = DMX_OUT_DECODER;
-	pes.pes_type = m_dev ? DMX_PES_AUDIO1 : DMX_PES_AUDIO0; /* FIXME */
+	switch (m_dev)
+	{
+	case 0:
+		pes.pes_type = DMX_PES_AUDIO0;
+		break;
+	case 1:
+		pes.pes_type = DMX_PES_AUDIO1;
+		break;
+	case 2:
+		pes.pes_type = DMX_PES_AUDIO2;
+		break;
+	case 3:
+		pes.pes_type = DMX_PES_AUDIO3;
+		break;
+	}
 #if defined(__sh__) // increases zapping speed
 	pes.flags    = DMX_IMMEDIATE_START;
 #else
@@ -272,7 +287,21 @@ int eDVBVideo::startPid(int pid, int type)
 	pes.pid      = pid;
 	pes.input    = DMX_IN_FRONTEND;
 	pes.output   = DMX_OUT_DECODER;
-	pes.pes_type = m_dev ? DMX_PES_VIDEO1 : DMX_PES_VIDEO0; /* FIXME */
+	switch (m_dev)
+	{
+	case 0:
+		pes.pes_type = DMX_PES_VIDEO0;
+		break;
+	case 1:
+		pes.pes_type = DMX_PES_VIDEO1;
+		break;
+	case 2:
+		pes.pes_type = DMX_PES_VIDEO2;
+		break;
+	case 3:
+		pes.pes_type = DMX_PES_VIDEO3;
+		break;
+	}
 #if defined(__sh__) // increases zapping speed
 	pes.flags    = DMX_IMMEDIATE_START;
 #else
@@ -535,7 +564,21 @@ int eDVBPCR::startPid(int pid)
 	pes.pid      = pid;
 	pes.input    = DMX_IN_FRONTEND;
 	pes.output   = DMX_OUT_DECODER;
-	pes.pes_type = m_dev ? DMX_PES_PCR1 : DMX_PES_PCR0; /* FIXME */
+	switch (m_dev)
+	{
+	case 0:
+		pes.pes_type = DMX_PES_PCR0;
+		break;
+	case 1:
+		pes.pes_type = DMX_PES_PCR1;
+		break;
+	case 2:
+		pes.pes_type = DMX_PES_PCR2;
+		break;
+	case 3:
+		pes.pes_type = DMX_PES_PCR3;
+		break;
+	}
 #if defined(__sh__) // increases zapping speed
 	pes.flags    = DMX_IMMEDIATE_START;
 #else
@@ -596,7 +639,21 @@ int eDVBTText::startPid(int pid)
 	pes.pid      = pid;
 	pes.input    = DMX_IN_FRONTEND;
 	pes.output   = DMX_OUT_DECODER;
-	pes.pes_type = m_dev ? DMX_PES_TELETEXT1 : DMX_PES_TELETEXT0; // FIXME
+	switch (m_dev)
+	{
+	case 0:
+		pes.pes_type = DMX_PES_TELETEXT0;
+		break;
+	case 1:
+		pes.pes_type = DMX_PES_TELETEXT1;
+		break;
+	case 2:
+		pes.pes_type = DMX_PES_TELETEXT2;
+		break;
+	case 3:
+		pes.pes_type = DMX_PES_TELETEXT3;
+		break;
+	}
 #if defined(__sh__) // increases zapping speed
 	pes.flags    = DMX_IMMEDIATE_START;
 #else
@@ -968,6 +1025,10 @@ RESULT eTSMPEGDecoder::pause()
 
 RESULT eTSMPEGDecoder::setFastForward(int frames_to_skip)
 {
+	// fast forward is only possible if video data is present
+	if (!m_video)
+		return -1;
+
 	if ((m_state == stateDecoderFastForward) && (m_ff_sm_ratio == frames_to_skip))
 		return 0;
 
@@ -981,6 +1042,10 @@ RESULT eTSMPEGDecoder::setFastForward(int frames_to_skip)
 
 RESULT eTSMPEGDecoder::setSlowMotion(int repeat)
 {
+	// slow motion is only possible if video data is present
+	if (!m_video)
+		return -1;
+
 	if ((m_state == stateSlowMotion) && (m_ff_sm_ratio == repeat))
 		return 0;
 
@@ -992,6 +1057,10 @@ RESULT eTSMPEGDecoder::setSlowMotion(int repeat)
 
 RESULT eTSMPEGDecoder::setTrickmode()
 {
+	// trickmode is only possible if video data is present
+	if (!m_video)
+		return -1;
+
 	if (m_state == stateTrickmode)
 		return 0;
 
@@ -1071,13 +1140,18 @@ RESULT eTSMPEGDecoder::showSinglePic(const char *filename)
 			{
 				bool seq_end_avail = false;
 				size_t pos=0;
-				unsigned char pes_header[] = { 0x00, 0x00, 0x01, 0xE0, 0x00, 0x00, 0x80, 0x00, 0x00 };
+				unsigned char pes_header[] = { 0x00, 0x00, 0x01, 0xE0, 0x00, 0x00, 0x80, 0x80, 0x05, 0x21, 0x00, 0x01, 0x00, 0x01 };
 				unsigned char seq_end[] = { 0x00, 0x00, 0x01, 0xB7 };
 				unsigned char iframe[s.st_size];
 				unsigned char stuffing[8192];
-				int streamtype = VIDEO_STREAMTYPE_MPEG2;
+				int streamtype;
 				memset(stuffing, 0, 8192);
 				read(f, iframe, s.st_size);
+				if (iframe[0] == 0x00 && iframe[1] == 0x00 && iframe[2] == 0x00 && iframe[3] == 0x01 && (iframe[4] & 0x0f) == 0x07)
+					streamtype = VIDEO_STREAMTYPE_MPEG4_H264;
+				else
+					streamtype = VIDEO_STREAMTYPE_MPEG2;
+
 				if (ioctl(m_video_clip_fd, VIDEO_SELECT_SOURCE, VIDEO_SOURCE_MEMORY) < 0)
 					eDebug("VIDEO_SELECT_SOURCE MEMORY failed (%m)");
 #if not defined(__sh__)
@@ -1093,13 +1167,13 @@ RESULT eTSMPEGDecoder::showSinglePic(const char *filename)
 				while(pos <= (s.st_size-4) && !(seq_end_avail = (!iframe[pos] && !iframe[pos+1] && iframe[pos+2] == 1 && iframe[pos+3] == 0xB7)))
 					++pos;
 				if ((iframe[3] >> 4) != 0xE) // no pes header
-					write(m_video_clip_fd, pes_header, sizeof(pes_header));
+					writeAll(m_video_clip_fd, pes_header, sizeof(pes_header));
 				else
 					iframe[4] = iframe[5] = 0x00;
-				write(m_video_clip_fd, iframe, s.st_size);
+				writeAll(m_video_clip_fd, iframe, s.st_size);
 				if (!seq_end_avail)
 					write(m_video_clip_fd, seq_end, sizeof(seq_end));
-				write(m_video_clip_fd, stuffing, 8192);
+				writeAll(m_video_clip_fd, stuffing, 8192);
 #if not defined(__sh__)
 				m_showSinglePicTimer->start(150, true);
 #endif
